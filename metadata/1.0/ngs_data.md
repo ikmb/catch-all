@@ -7,7 +7,7 @@ The following keys are defined to described raw data from next-generation sequen
 
 ## Sample sheet
 
-NGS Metadata sample sheet [XLSX]()
+NGS Metadata sample sheet [XLSX](CATCH-ALL_NGS_raw_data_1.0.xlsx)
 
 ## Defined keys
 
