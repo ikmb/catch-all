@@ -4,7 +4,7 @@ import sys
 
 import pandas
 
-from Common import Misc
+import Misc
 
 
 class UploadFastq():
@@ -142,7 +142,7 @@ class UploadFastq():
             sys.exit(1)
         else:
             target_folder = target_folder[0]
-            single_meta.loc['flowcell_lane', 'value'] = Misc.gettingfilename(target_folder[:-1]).split("_")[-1][1:]
+            single_meta.loc['flowcell_lane', 'value'] = Misc.filename_manipulate.gettingfilename(target_folder[:-1]).split("_")[-1][1:]
             return single_meta.dropna(), target_folder
 
     @classmethod
@@ -157,7 +157,7 @@ class UploadFastq():
         different it will complain. If every thing is ok it will send the full path of R1_gzfile and R2_gzfile
 
         """
-        files = Misc.folder_vs_list_single(target_folder)
+        files = Misc.filename_manipulate.folder_vs_list_single(target_folder)
         if len(files) != 4:
             print(
                 "Expected number of files in the folder is expected to be 4. Read1, Read2, Read1.md5sum and "
@@ -184,7 +184,7 @@ class UploadFastq():
         Returns: will return Read1, Read2 fastq zipped path.
 
         """
-        Read = Misc.filenamewithoutextension_checking_zipped(gzfiles[0]).split("_")[-2]
+        Read = Misc.filename_manipulate.filenamewithoutextension_checking_zipped(gzfiles[0]).split("_")[-2]
         if Read == 'R1':
             R1_gzfile = gzfiles[0]
             R2_gzfile = gzfiles[1]

@@ -6,7 +6,6 @@ import os
 
 import iRodsClass
 from Common import Misc
-from SubmittingJobs import SubmittingJobsClass
 
 parser = argparse.ArgumentParser(description="Uploading the files in the Yoda/iRods system and adding the metadata. "
                                              "You need to login first using iinit")
@@ -23,9 +22,6 @@ sp.add_argument('xlsx', help="Path of the metadata info excel sheet that is gene
 sp.add_argument('--ifolder', help="The abs path of irods folder. Please do not upload realtive path", required=True)
 sp.add_argument('--folder', help="The path of the folder where fastq is present in locally. default is current working "
                                  "directory")
-sp.add_argument('--run',
-                help='As the name suggest. by default it will submit the jobs in the cluster. But if we dont want '
-                     'that this will force run all the jobs in the single terminal', action="store_true")
 sp.add_argument('--upload',
                 help='By default it will upload and add the meta data. But you can run it separately. If --upload is '
                      'used it will only upload the data', action="store_true")
@@ -47,11 +43,5 @@ if args.cmd == "fastq":
             prefix="all"
         _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
     for name in commands:
-        if args.run:
-            # os.system(f'sh shfiles/{name}.sh')
-            print(f'{name} is done')
-        else:
-            args = argparse.Namespace(command=commands[name], name=name, log=True, sh=True, memory=4000)
-            submission = SubmittingJobsClass.sbatchoneliner(args)
-            submitcommand = submission.argsparser()
-            os.system(submitcommand)
+        os.system(f'sh shfiles/{name}.sh')
+        print(f'{name} is done')
