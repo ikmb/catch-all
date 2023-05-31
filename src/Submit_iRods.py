@@ -30,10 +30,10 @@ sp.add_argument('--meta',
                      'used it will remove the previously uploaded files metadata and add new meta data. Only use'
                      'after --upload', action="store_true")
 args = parser.parse_args()
-if args.cmd == "fastq":
-    commands = iRodsClass.UploadFastq.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
-                                           upload=args.upload, meta=args.meta)
-    if args.run:
+if __name__ == "__main__":
+    if args.cmd == "fastq":
+        commands = iRodsClass.UploadFastq.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
+                                               upload=args.upload, meta=args.meta)
         Misc.creatingfolders("shfiles")
         if args.upload:
             prefix="upload"
@@ -42,6 +42,6 @@ if args.cmd == "fastq":
         else:
             prefix="all"
         _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
-    for name in commands:
-        os.system(f'sh shfiles/{name}.sh')
-        print(f'{name} is done')
+        for name in commands:
+            os.system(f'sh shfiles/{name}.sh')
+            print(f'{prefix} {name} is done')
