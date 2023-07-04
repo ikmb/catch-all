@@ -1,15 +1,30 @@
 ![](../../images/logo.png)
 # NGS Metadata standard, v1.1
 
-## Overview
-
-The following keys are defined to described raw data from next-generation sequencing instruments.
-
 ## Sample sheet
 
 NGS Metadata sample sheet [XLSX](CATCH-ALL_NGS_raw_data_1.1.xlsx)
 
-## Defined keys
+### Submitter_Information
+This tab will have the information of the person who has submitted the data for sequencing. It will also have the 
+information on the color legend present in the Metadata tab.
+
+### Project Info
+This tab will have a short description on the project.
+
+| Key            | Description                                                                                                                  |
+|----------------|------------------------------------------------------------------------------------------------------------------------------|
+| Title          | An appropriate human readable title of the project                                                                           |
+| Key word(s)    | Key words so that it can be easily searchable in the yoda system                                                             |
+| Short abstract | A short abstract about the project so that later if somebody reads the irods folder they can understand the context easily.  |
+
+## Metadata
+Main tab of the file. The row is input method of the column (for example string, integer, float etc). It is color coded. 
+In case red the column is mandatory. Next row is the header (as presented as the key here). All the other rows are the 
+information about the samples. 
+
+## Descriptions 
+A small description of the metadata keys in case it is not clear only by the name. 
 
 | Key                                        | Description                                                                                                                                                 |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -55,3 +70,17 @@ NGS Metadata sample sheet [XLSX](CATCH-ALL_NGS_raw_data_1.1.xlsx)
 | investigation_type                         | Type of investigation performed                                                                                                                             |
 | relevant_standard_operating_procedures     | Standard operating procedures used for data production                                                                                                      |
 | comment                                    | A comment about the data                                                                                                                                    |
+
+### Validation
+This is for the prefilled values for certain columns. This table would have the information what are those prefilled 
+drop down menu can have. For example: 
+sequencing platform column can have values 
+
+| sequencing platform |
+|---------------------|
+| NovaSeq 6000        |
+| Sequel IIe          |
+| Revio               |
+| ....                |
+
+for drop down menu. This information will be saved in the Validation tab. 
