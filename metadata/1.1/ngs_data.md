@@ -1,5 +1,5 @@
 ![](../../images/logo.png)
-# NGS Metadata standard, v1.0
+# NGS Metadata standard, v1.1
 
 ## Overview
 
@@ -7,7 +7,7 @@ The following keys are defined to described raw data from next-generation sequen
 
 ## Sample sheet
 
-NGS Metadata sample sheet [XLSX](CATCH-ALL_NGS_raw_data_1.0.xlsx)
+NGS Metadata sample sheet [XLSX](CATCH-ALL_NGS_raw_data_1.1.xlsx)
 
 ## Defined keys
 

@@ -6,3 +6,4 @@ Metadata defines the types of information that describe the technical and/or exp
 ## Raw data
 
 [NGS 1.0](1.0/ngs_data.md)
+[NGS 1.1](1.1/ngs_data.md)

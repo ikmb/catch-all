@@ -1,4 +1,4 @@
-# Metadata Standard, version 1.0
+# Metadata Standard, version 1.1
 
 The following metadata sets are defined:
 
