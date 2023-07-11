@@ -5,7 +5,7 @@ import argparse
 import os
 
 import iRodsClass
-from Common import Misc
+import Misc
 
 parser = argparse.ArgumentParser(description="Uploading the files in the Yoda/iRods system and adding the metadata. "
                                              "You need to login first using iinit")
