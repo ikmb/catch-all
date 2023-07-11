@@ -126,8 +126,8 @@ class UploadFastq:
         if not os.path.isabs(ifolder):
             print("Your ifolder is not absolute. Please use an absolute path to run it")
             sys.exit(1)
-        prefix = single_meta.loc['sample_barcode', 'value'].replace("-DL", "-DS") + '_' + single_meta.loc[
-            'library_id', 'value']
+        prefix = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS") + '_' + single_meta.loc[
+            'library id', 'value']
         folder = os.path.abspath(folder or os.getcwd())
         target_folder = glob.glob(f'{folder}/{prefix}*/')
         if len(target_folder) > 1:
@@ -136,14 +136,14 @@ class UploadFastq:
         elif len(target_folder) == 0:
             print(
                 "no folder found for corresponding folder. Please check and update the excel sheet. if the folder does "
-                "not exist please delte the row")
+                "not exist please delete the row")
             print(f'expected folder: {folder}/{prefix}*/')
             print(single_meta)
             sys.exit(1)
         else:
             target_folder = target_folder[0]
             filename = Misc.filename_manipulate.gettingfilename(target_folder[:-1])
-            single_meta.loc['flowcell_lane', 'value'] = filename.split("_")[-1][1:]
+            single_meta.loc['flowcell lane', 'value'] = filename.split("_")[-1][1:]
             return single_meta.dropna(), target_folder
 
     @classmethod
