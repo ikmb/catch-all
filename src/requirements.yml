@@ -1,3 +1,5 @@
 name: catch-all
+channels:
+  - anaconda
 dependencies:
   - pandas
