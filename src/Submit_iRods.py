@@ -43,5 +43,5 @@ if __name__ == "__main__":
             prefix="all"
         _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
         for name in commands:
-            os.system(f'sh shfiles/{name}.sh')
+            os.system(f'sh shfiles/{prefix}_{name}.sh')
             print(f'{prefix} {name} is done')
