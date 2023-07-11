@@ -7,7 +7,7 @@ import pandas
 import Misc
 
 
-class UploadFastq():
+class UploadFastq:
     """
     This class will help to upload fastq files in the irods/yoda system
     """
@@ -15,7 +15,7 @@ class UploadFastq():
     @classmethod
     def main(cls, metadata, ifolder, folder=None, upload=False, meta=False):
         """
-        The main wrapper function for uploading the the fastq files with all the necessary checks. given a metaddata
+        The main wrapper function for uploading the fastq files with all the necessary checks. given a metadata
         csv file. It will read it, guess the folder names from the metadata and search it in the <folder>. Every row
         in the metadata should have corresponding folder. folders should be same prefix as fastq files, without
         _R1_001.fastq.gz or _R2_001.fastq.gz. Fastq naming system are automatically created from the cluster. So does
@@ -24,18 +24,18 @@ class UploadFastq():
         remove all the metadata first but then after removing the metadata it will update the new metadata
 
         Args:
-            metadata: Path of the metadata info excel sheet that is generated. check
-            https://github.com/ikmb/data-management/scripts/metadata_set_table_from_lims.rb for more information on
-            excel sheet. Mainly it will read Metadata sheet in excel file. Metadata sheet should have information in
-            rows. first row is units, second row attribute name and everything else is values needed for irods to be
+            metadata: Path of the metadata info Excel sheet that is generated. check
+                https://github.com/ikmb/data-management/scripts/metadata_set_table_from_lims.rb for more information on
+                Excel sheet. Mainly it will read Metadata sheet in Excel file. Metadata sheet should have information in
+                rows. first row is units, second row attribute name and everything else is values needed for irods to be
             uploaded. <metadata>.xlsx
             ifolder: The abs path of irods folder. Please do not upload relative path
             folder: The path of the folder where fastq is present in locally. default is current working directory
-            upload: By default it will return commands for upload and add the meta data. But you can run it separately.
+            upload: By default it will return commands for upload and add the metadata. But you can run it separately.
             If upload=True is used it will only return upload commands. Good in case very big multiple files
-            meta: By default it will return commands for upload and add the meta data. But you can run it separately.
+            meta: By default it will return commands for upload and add the metadata. But you can run it separately.
             If meta=True is used it will return commands to remove the previously uploaded files metadata and
-            add new meta data. Only use after you have uploaded the files
+            add new metadata. Only use after you have uploaded the files
 
         Returns: it will check necessary files present or not and then will return all the commands necessary to upload
         it. It will not run it. For running use os.system(list(dict_commands.values())) or check Submit_iRods.py
@@ -52,7 +52,7 @@ class UploadFastq():
     @classmethod
     def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False):
         """
-        commands neccesary for a single row in the metadata to upload all the files and adding all the necessary
+        commands necessary for a single row in the metadata to upload all the files and adding all the necessary
         metadata. for fastq it means you need 4 files inside every folder. folder should be same prefix as fastq files,
         without _R1_001.fastq.gz or _R2_001.fastq.gz. Fastq naming system are automatically created from the cluster.
         So does not need much attention. it will check if every folder has 4 files. Read1.fastq.gz, Read2.fastq.gz,
@@ -62,11 +62,11 @@ class UploadFastq():
             single_meta: single row of Metadata sheet from <metadata>.xlsx
             ifolder: The abs path of irods folder. Please do not upload relative path
             folder: The path of the folder where fastq is present in locally. default is current working directory
-            upload: By default it will return commands for upload and add the meta data. But you can run it separately.
+            upload: By default it will return commands for upload and add the metadata. But you can run it separately.
             If upload=True is used it will only return upload commands. Good in case very big multiple files
-            meta: By default it will return commands for upload and add the meta data. But you can run it separately.
+            meta: By default it will return commands for upload and add the metadata. But you can run it separately.
             If meta=True is used it will return commands to remove the previously uploaded files metadata and
-            add new meta data. Only use after you have uploaded the files
+            add new metadata. Only use after you have uploaded the files
 
         Returns: it will check necessary files present or not and then will return all the commands necessary to upload
         the files for a single row
@@ -78,8 +78,8 @@ class UploadFastq():
         R1, R2 = cls.check_files(target_folder=target_folder)
         if upload:
             if meta:
-                print ("both meta and upload cant be True. Use either one of them at a time. If you want run all do "
-                       "nothing. By default it will run the whole thing")
+                print("both meta and upload cant be True. Use either one of them at a time. If you want run all do "
+                      "nothing. By default it will run the whole thing")
                 sys.exit(1)
             commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
 
@@ -119,7 +119,7 @@ class UploadFastq():
             ifolder: The abs path of irods folder. Please do not upload relative path
             folder: The path of the folder where fastq is present in locally. default is current working directory
 
-        Returns: It will retrun updated single_meta Series by adding lae info and remove all the NAs. It will also #
+        Returns: It will return updated single_meta Series by adding lae info and remove all the NAs. It will also #
         return the target folder which needs to be uploaded from local folder.
 
         """
@@ -133,7 +133,7 @@ class UploadFastq():
         if len(target_folder) > 1:
             print("currently not implemented for more than one lane. please update the code ")
             sys.exit(1)
-        elif (len(target_folder) == 0):
+        elif len(target_folder) == 0:
             print(
                 "no folder found for corresponding folder. Please check and update the excel sheet. if the folder does "
                 "not exist please delte the row")
@@ -142,7 +142,8 @@ class UploadFastq():
             sys.exit(1)
         else:
             target_folder = target_folder[0]
-            single_meta.loc['flowcell_lane', 'value'] = Misc.filename_manipulate.gettingfilename(target_folder[:-1]).split("_")[-1][1:]
+            filename = Misc.filename_manipulate.gettingfilename(target_folder[:-1])
+            single_meta.loc['flowcell_lane', 'value'] = filename.split("_")[-1][1:]
             return single_meta.dropna(), target_folder
 
     @classmethod
@@ -168,7 +169,7 @@ class UploadFastq():
         gzfiles = [file for file in files if file[-6:] != 'md5sum']
         for gzfile in gzfiles:
             if not gzfile + '.md5sum' in md5files:
-                print("cant find the md5sum for the corresponsing gzfile")
+                print("cant find the md5sum for the corresponding gzfile")
                 print(gzfile)
                 sys.exit(1)
         R1_gzfile, R2_gzfile = cls.R1_R2_file(gzfiles)
@@ -200,7 +201,7 @@ class UploadFastq():
         Args:
             R1: R1.fastq.gz file path local
             R2: R2.fastq.gz file path local
-            ifolder: irods upladoing path full
+            ifolder: irods uploading path full
 
         Returns: it will create commands for creating folder and uploading all the 4 files.
 
@@ -223,9 +224,9 @@ class UploadFastq():
             single_meta: single_meta: single row of Metadata sheet from <metadata>.xlsx. with added Lane info and
             removed blank lines
             filepath: fastq.gz file path local
-            ifolder: irods upladoing path full
+            ifolder: irods uploading path full
             read1: telling the file if it is R1=True or R2=False. Needed to added R1 or R2 in the metadata (or remove in
-            this case
+            this case)
 
         Returns: will return all the commands which are needed to be removed before adding new metadata
 
@@ -247,11 +248,11 @@ class UploadFastq():
             single_meta: single_meta: single row of Metadata sheet from <metadata>.xlsx. with added Lane info and
             removed blank lines
             filepath: fastq.gz file path local
-            ifolder:  irods upladoing path full
+            ifolder:  irods uploading path full
             read1: telling the file if it is R1=True or R2=False. Needed to added R1 or R2 in the metadata (or remove in
-            this case
+            this case)
 
-        Returns: will return all the necessary commands which are needed to add the metadata to uplaoded files.
+        Returns: will return all the necessary commands which are needed to add the metadata to uploaded files.
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")

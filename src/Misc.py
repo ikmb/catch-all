@@ -149,6 +149,26 @@ class filename_manipulate:
             return ""
 
 
+def creatingfolders(specificfolder: str) -> str:
+    """
+    As the name suggest it will create a folder if the folder do not exist. As simple as that. it will also check if
+    the end is '/' as important to work later. it will return the folder it created
 
+    :param specificfolder: The folder needs to be created
+    :return: will not return anything. Either it will create if the folder do not exist or not return anything
+    """
+    import os
+    if specificfolder != '':
+        if specificfolder[-1] != '/':
+            specificfolder = specificfolder + '/'
 
+        specificfolder = os.path.expanduser(specificfolder)
+        if not os.path.exists(specificfolder):
+            os.makedirs(specificfolder)
+    return specificfolder
 
+def writing_bylines4mlist(mylist, output='out.txt'):
+    with open(output, 'w') as f:
+        for item in mylist:
+            f.write("%s\n" % item)
+    return output
