@@ -4,13 +4,13 @@ Uploading the files in the Yoda/iRods system and adding the metadata
 import argparse
 import os
 
-import iRodsClass
 import Misc
+import iRodsClass
 
 parser = argparse.ArgumentParser(description="Uploading the files in the Yoda/iRods system and adding the metadata. "
                                              "You need to login first using iinit")
 subparsers = parser.add_subparsers(help='sub-commands help')
-sp = subparsers.add_parser('fastq', help='Uploading the fastq files. For now only works for pair end illumina'
+sp = subparsers.add_parser('fastq', help='Uploading the fastq files. For now only works for pair end Illumina'
                                          'genome sequences')
 sp.set_defaults(cmd='fastq')
 sp.add_argument('xlsx', help="Path of the metadata info excel sheet that is generated. check "
@@ -19,7 +19,7 @@ sp.add_argument('xlsx', help="Path of the metadata info excel sheet that is gene
                              "sheet should have information in rows. first row is units, second row attribute name"
                              "and everything else is values needed for irods to be uploaded",
                 type=lambda x: Misc.args_valid_file(parser, x))
-sp.add_argument('--ifolder', help="The abs path of irods folder. Please do not upload realtive path", required=True)
+sp.add_argument('--ifolder', help="The abs path of irods folder. Please do not upload relative path", required=True)
 sp.add_argument('--folder', help="The path of the folder where fastq is present in locally. default is current working "
                                  "directory")
 sp.add_argument('--upload',
@@ -36,11 +36,11 @@ if __name__ == "__main__":
                                                upload=args.upload, meta=args.meta)
         Misc.creatingfolders("shfiles")
         if args.upload:
-            prefix="upload"
+            prefix = "upload"
         elif args.meta:
-            prefix="meta"
+            prefix = "meta"
         else:
-            prefix="all"
+            prefix = "all"
         _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
         for name in commands:
             os.system(f'sh shfiles/{prefix}_{name}.sh')
