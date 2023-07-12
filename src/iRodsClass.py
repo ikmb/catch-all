@@ -232,7 +232,7 @@ class UploadFastq:
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-        commands = [f'imeta rmw -d {ifolder}/{uploadfile} {meta} % %' for meta in single_meta.index]
+        commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
         if read1:
             read_info = f'imeta rmw -d {ifolder}/{uploadfile}  pair_end_read % %'
         else:
@@ -256,7 +256,7 @@ class UploadFastq:
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-        metainfo = list((single_meta.index + ' "' +
+        metainfo = list(('"'+single_meta.index + '" "' +
                          single_meta.loc[:, 'value'].astype(str) + '" ' +
                          single_meta.loc[:, 'units']).values)
         if read1:
