@@ -216,7 +216,7 @@ class UploadFastq:
         return commands, uploadfolder
 
     @classmethod
-    def removing_metadata_commands(cls, single_meta, filepath, ifolder, read1=True):
+    def removing_metadata_commands(cls, single_meta, filepath, ifolder, read1_read2=True, read1=True):
         """
         It will give commands to remove the metadata first. not point adding new metadata in case it already existed.
         imeta rmw -d <irods_file> <meta> % %
@@ -225,6 +225,7 @@ class UploadFastq:
             removed blank lines
             filepath: fastq.gz file path local
             ifolder: irods uploading path full
+            read1_read2: in case the file is neither read1 or read2 of fastq (for example cram) then put false.
             read1: telling the file if it is R1=True or R2=False. Needed to added R1 or R2 in the metadata (or remove in
             this case)
 
@@ -233,15 +234,16 @@ class UploadFastq:
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-        if read1:
-            read_info = f'imeta rmw -d {ifolder}/{uploadfile}  pair_end_read % %'
-        else:
-            read_info = f'imeta rmw -d {ifolder}/{uploadfile} pair_end_read % %'
-        commands.append(read_info)
+        if read1_read2:
+            if read1:
+                read_info = f'imeta rmw -d {ifolder}/{uploadfile}  pair_end_read % %'
+            else:
+                read_info = f'imeta rmw -d {ifolder}/{uploadfile} pair_end_read % %'
+            commands.append(read_info)
         return commands
 
     @classmethod
-    def adding_metadata_commands(cls, single_meta, filepath, ifolder, read1=True):
+    def adding_metadata_commands(cls, single_meta, filepath, ifolder, read1=True, read1_read2=True):
         """
         main point of all this. adding metadata to the uploaded irods file. imeta add -d <irods_file> <meta>
         Args:
@@ -256,13 +258,97 @@ class UploadFastq:
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-        metainfo = list(('"'+single_meta.index + '" "' +
+        metainfo = list(('"' + single_meta.index + '" "' +
                          single_meta.loc[:, 'value'].astype(str) + '" ' +
                          single_meta.loc[:, 'units']).values)
-        if read1:
-            read_info = f'pair_end_read "Read1" String'
-        else:
-            read_info = f'pair_end_read "Read2" String'
-        metainfo.append(read_info)
+        if read1_read2:
+            if read1:
+                read_info = f'pair_end_read "Read1" String'
+            else:
+                read_info = f'pair_end_read "Read2" String'
+            metainfo.append(read_info)
         commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
         return commands
+
+
+class UploadCram(UploadFastq):
+    @classmethod
+    def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False):
+        single_meta = single_meta.reset_index(level=0)
+        single_meta.columns = ['units', 'value']
+        single_meta, target_folder = cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
+        files = cls.check_files(target_folder)
+        if 'fasta' not in single_meta.index:
+            print("Could not find the fasta column in the excel. Please add the fasta file is used")
+        if upload:
+            if meta:
+                print("both meta and upload cant be True. Use either one of them at a time. If you want run all do "
+                      "nothing. By default it will run the whole thing")
+                sys.exit(1)
+            commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
+        elif meta:
+            _, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
+            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder,
+                                                         read1_read2=False)
+            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], read1_read2=False,
+                                                    ifolder=ifolder)
+            commands = cram_remove+ cram_add
+        else:
+            upload_commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
+            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder,
+                                                         read1_read2=False)
+            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], read1_read2=False,
+                                                    ifolder=ifolder)
+            commands = upload_commands+ cram_remove+ cram_add
+        commands = Misc.joinginglistbyspecificstring(commands, string="\n")
+        return uploadfolder, commands
+
+    @classmethod
+    def checking_folder(cls, single_meta, ifolder, folder=None):
+        if not os.path.isabs(ifolder):
+            print("Your ifolder is not absolute. Please use an absolute path to run it")
+            sys.exit(1)
+        prefix = single_meta.loc['sample name', 'value']
+        folder = os.path.abspath(folder or os.getcwd())
+        target_folder = glob.glob(f'{folder}/{prefix}/')
+        if len(target_folder) == 0:
+            print(
+                "no folder found for corresponding folder. Please check and update the excel sheet. if the folder does "
+                "not exist please delete the row")
+            print(f'expected folder: {folder}/{prefix}/')
+            print(single_meta)
+            sys.exit(1)
+        else:
+            target_folder = target_folder[0]
+            return single_meta.dropna(), target_folder
+
+    @classmethod
+    def check_files(cls, target_folder):
+        samplename = os.path.basename(target_folder[:-1])
+        if not os.path.exists(f'{target_folder}{samplename}.cram'):
+            print("could not find the cram file. please check:", f'{target_folder}{samplename}.cram')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.cram.md5'):
+            print("could not find the cram.md5 file. please check:", f'{target_folder}{samplename}.cram.md5')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.cram.crai'):
+            print("could not find the crai file. please check:", f'{target_folder}{samplename}.cram.crai')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.cram.crai.md5'):
+            print("could not find the crai.md5 file. please check:", f'{target_folder}{samplename}.cram.crai.md5')
+            sys.exit(1)
+        files = [f'{target_folder}{samplename}.cram', f'{target_folder}{samplename}.cram.crai',
+                 f'{target_folder}{samplename}.cram.md5', f'{target_folder}{samplename}.cram.crai.md5']
+        return files
+
+    @classmethod
+    def uploading_commands(cls, files, ifolder):
+        uploadfolder = files[0].split("/")[-2]
+        mkdir_command = f'imkdir -p {ifolder}/{uploadfolder}'
+        upload_cram_command = f'irsync -K {files[0]} i:{ifolder}/{uploadfolder}'
+        upload_crai_command = f'irsync -K {files[1]} i:{ifolder}/{uploadfolder}'
+        upload_crammd5_command = f'irsync -K {files[2]} i:{ifolder}/{uploadfolder}'
+        upload_craimd5_command = f'irsync -K {files[3]} i:{ifolder}/{uploadfolder}'
+        commands = [mkdir_command, upload_cram_command, upload_crai_command, upload_crammd5_command,
+                    upload_craimd5_command]
+        return commands, uploadfolder
