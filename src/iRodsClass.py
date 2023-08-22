@@ -83,28 +83,18 @@ class UploadFastq:
                 sys.exit(1)
             commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
 
-        elif meta:
-            _, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
-            R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder,
-                                                       read1=True)
-            R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, read1=True,
-                                                          ifolder=ifolder)
-            R2_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder,
-                                                       read1=False)
-            R2_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R2, read1=False,
-                                                          ifolder=ifolder)
-            commands = R1_remove + R1_add_command + R2_remove + R2_add_command
         else:
             upload_commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
-            R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder,
-                                                       read1=True)
-            R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, read1=True,
-                                                          ifolder=ifolder)
-            R2_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder,
-                                                       read1=False)
-            R2_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R2, read1=False,
-                                                          ifolder=ifolder)
-            commands = upload_commands + R1_remove + R1_add_command + R2_remove + R2_add_command
+            R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
+            R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
+            R1_special = cls.special_metadata(single_meta=single_meta, filepath=R1, ifolder=ifolder, read1=True)
+            R2_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
+            R2_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
+            R2_special = cls.special_metadata(single_meta=single_meta, filepath=R2, ifolder=ifolder, read1=False)
+            if meta:
+                commands = R1_remove + R1_add_command + R1_special + R2_remove + R2_add_command + R2_special
+            else:
+                commands = upload_commands + R1_remove + R1_add_command + R2_remove + R2_add_command
         return uploadfolder, Misc.joinginglistbyspecificstring(commands, string="\n")
 
     @classmethod
@@ -216,7 +206,7 @@ class UploadFastq:
         return commands, uploadfolder
 
     @classmethod
-    def removing_metadata_commands(cls, single_meta, filepath, ifolder, read1_read2=True, read1=True):
+    def removing_metadata_commands(cls, single_meta, filepath, ifolder):
         """
         It will give commands to remove the metadata first. not point adding new metadata in case it already existed.
         imeta rmw -d <irods_file> <meta> % %
@@ -234,16 +224,10 @@ class UploadFastq:
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-        if read1_read2:
-            if read1:
-                read_info = f'imeta rmw -d {ifolder}/{uploadfile}  pair_end_read % %'
-            else:
-                read_info = f'imeta rmw -d {ifolder}/{uploadfile} pair_end_read % %'
-            commands.append(read_info)
         return commands
 
     @classmethod
-    def adding_metadata_commands(cls, single_meta, filepath, ifolder, read1=True, read1_read2=True):
+    def adding_metadata_commands(cls, single_meta, filepath, ifolder):
         """
         main point of all this. adding metadata to the uploaded irods file. imeta add -d <irods_file> <meta>
         Args:
@@ -261,13 +245,19 @@ class UploadFastq:
         metainfo = list(('"' + single_meta.index + '" "' +
                          single_meta.loc[:, 'value'].astype(str) + '" ' +
                          single_meta.loc[:, 'units']).values)
-        if read1_read2:
-            if read1:
-                read_info = f'pair_end_read "Read1" String'
-            else:
-                read_info = f'pair_end_read "Read2" String'
-            metainfo.append(read_info)
+
         commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+        return commands
+
+    @classmethod
+    def special_metadata(cls, single_meta, filepath, ifolder, read1=True):
+        uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
+        meta_remove = f'imeta rmw -d {ifolder}/{uploadfile} "pair_end_read" % %'
+        if read1:
+            meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_read" "Read1" String'
+        else:
+            meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_read" "Read2" String'
+        commands = [meta_remove, meta_add]
         return commands
 
 
@@ -286,20 +276,15 @@ class UploadCram(UploadFastq):
                       "nothing. By default it will run the whole thing")
                 sys.exit(1)
             commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
-        elif meta:
-            _, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
-            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder,
-                                                         read1_read2=False)
-            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], read1_read2=False,
-                                                    ifolder=ifolder)
-            commands = cram_remove+ cram_add
         else:
             upload_commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
-            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder,
-                                                         read1_read2=False)
-            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], read1_read2=False,
-                                                    ifolder=ifolder)
-            commands = upload_commands+ cram_remove+ cram_add
+            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+            cram_special = cls.special_metadata(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+            if meta:
+                commands = cram_remove + cram_add + cram_special
+            else:
+                commands = upload_commands + cram_remove + cram_add + cram_special
         commands = Misc.joinginglistbyspecificstring(commands, string="\n")
         return uploadfolder, commands
 
@@ -352,3 +337,20 @@ class UploadCram(UploadFastq):
         commands = [mkdir_command, upload_cram_command, upload_crai_command, upload_crammd5_command,
                     upload_craimd5_command]
         return commands, uploadfolder
+
+    @classmethod
+    def special_metadata(cls, single_meta, filepath, ifolder):
+        uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
+        meta_remove = f'imeta rmw -d {ifolder}/{uploadfile}  "pair_end_reads" % %'
+        if 'flowcell lane' not in single_meta.index:
+            print("flowcell lane column is mandatory for cram files. Please add")
+            sys.exit(1)
+        barcode = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS")
+        library = single_meta.loc['library id', 'value']
+        lane = single_meta.loc['flowcell lane', 'value']
+        sample_number = single_meta.loc['sample barcode', 'value'].split("-")[1][2:]
+        R1 = f'{barcode}_{library}_S{sample_number}_{lane}_R1_001.fastq.gz'
+        R2 = f'{barcode}_{library}_S{sample_number}_R2_001.fastq.gz'
+        meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_reads" "{R1} {R2}" String'
+        commands = [meta_remove, meta_add]
+        return commands
