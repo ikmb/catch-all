@@ -161,8 +161,8 @@ class UploadFastq:
                 "Read2.md5sum. did not find all of them. please check")
             print(files)
             sys.exit(1)
-        md5files = [file for file in files if file[-6:] == 'md5']
-        gzfiles = [file for file in files if file[-6:] != 'md5']
+        md5files = [file for file in files if file[-3:] == 'md5']
+        gzfiles = [file for file in files if file[-3:] != 'md5']
         for gzfile in gzfiles:
             if not gzfile + '.md5' in md5files:
                 print("cant find the md5sum for the corresponding gzfile")
