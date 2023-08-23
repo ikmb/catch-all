@@ -20,7 +20,7 @@ class UploadFastq:
         in the metadata should have corresponding folder. folders should be same prefix as fastq files, without
         _R1_001.fastq.gz or _R2_001.fastq.gz. Fastq naming system are automatically created from the cluster. So does
         not need much attention. it will check if every folder has 4 files. Read1.fastq.gz, Read2.fastq.gz,
-        Read1.fastq.gz.md5sum, Read2.fastq.gz.md5sum. Then it will give commands to start uploading the data irods and
+        Read1.fastq.gz.md5, Read2.fastq.gz.md5. Then it will give commands to start uploading the data irods and
         remove all the metadata first but then after removing the metadata it will update the new metadata
 
         Args:
@@ -62,7 +62,7 @@ class UploadFastq:
         metadata. for fastq it means you need 4 files inside every folder. folder should be same prefix as fastq files,
         without _R1_001.fastq.gz or _R2_001.fastq.gz. Fastq naming system are automatically created from the cluster.
         So does not need much attention. it will check if every folder has 4 files. Read1.fastq.gz, Read2.fastq.gz,
-        Read1.fastq.gz.md5sum, Read2.fastq.gz.md5sum. Then it will give commands to start uploading the data irods and
+        Read1.fastq.gz.md5, Read2.fastq.gz.md5. Then it will give commands to start uploading the data irods and
         remove all the metadata first but then after removing the metadata it will update the new metadata
         Args:
             single_meta: single row of Metadata sheet from <metadata>.xlsx
@@ -157,8 +157,8 @@ class UploadFastq:
         files = Misc.filename_manipulate.folder_vs_list_single(target_folder)
         if len(files) != 4:
             print(
-                "Expected number of files in the folder is expected to be 4. Read1, Read2, Read1.md5sum and "
-                "Read2.md5sum. did not find all of them. please check")
+                "Expected number of files in the folder is expected to be 4. Read1, Read2, Read1.md5 and "
+                "Read2.md5. did not find all of them. please check")
             print(files)
             sys.exit(1)
         md5files = [file for file in files if file[-3:] == 'md5']
@@ -206,8 +206,8 @@ class UploadFastq:
         mkdir_command = f'imkdir -p {ifolder}/{uploadfolder}'
         upload_R1_command = f'irsync -K {R1} i:{ifolder}/{uploadfolder}'
         upload_R2_command = f'irsync -K {R2} i:{ifolder}/{uploadfolder}'
-        upload_R1md5_command = f'irsync -K {R1}.md5sum i:{ifolder}/{uploadfolder}'
-        upload_R2md5_command = f'irsync -K {R2}.md5sum i:{ifolder}/{uploadfolder}'
+        upload_R1md5_command = f'irsync -K {R1}.md5 i:{ifolder}/{uploadfolder}'
+        upload_R2md5_command = f'irsync -K {R2}.md5 i:{ifolder}/{uploadfolder}'
         commands = [mkdir_command, upload_R1_command, upload_R1md5_command, upload_R2_command, upload_R2md5_command]
         return commands, uploadfolder
 
@@ -290,7 +290,7 @@ class UploadCram(UploadFastq):
         commands necessary for a single row in the metadata to upload all the files and adding all the necessary
         metadata. for cram it means you need 4 files inside every folder. folder should be same prefix as cram files,
         which is generally the sample name. it will check if every folder has 4 files. Read1.fastq.gz, Read2.fastq.gz,
-        Read1.fastq.gz.md5sum, Read2.fastq.gz.md5sum. Then it will give commands to start uploading the data irods and
+        Read1.fastq.gz.md5, Read2.fastq.gz.md5. Then it will give commands to start uploading the data irods and
         remove all the metadata first but then after removing the metadata it will update the new metadata
         Args:
             single_meta: single row of Metadata sheet from <metadata>.xlsx
