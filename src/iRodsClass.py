@@ -42,6 +42,12 @@ class UploadFastq:
 
         """
         metadf = pandas.read_excel(metadata, sheet_name="Metadata", header=[0, 1]).transpose()
+        samples = metadf.loc[('String', 'sample name'), :]
+        if metadf.shape[1] != samples.unique().shape[0]:
+            print("There are repeated sample name for multiple sequences. Right now the code can not handle that.")
+            print("Please check these samples")
+            print(samples[samples()])
+            sys.exit(1)
         commands = [
             cls.single_meta_commands(single_meta=single_meta, ifolder=ifolder, folder=folder, upload=upload, meta=meta)
             for index, single_meta in metadf.items()]
@@ -109,7 +115,7 @@ class UploadFastq:
             ifolder: The abs path of irods folder. Please do not upload relative path
             folder: The path of the folder where fastq is present in locally. default is current working directory
 
-        Returns: It will return updated single_meta Series by adding lae info and remove all the NAs. It will also #
+        Returns: It will return updated single_meta Series by adding lae info and remove all the NAs. It will also
         return the target folder which needs to be uploaded from local folder.
 
         """
@@ -140,7 +146,7 @@ class UploadFastq:
     def check_files(cls, target_folder):
         """
         This will check specific files are present in the folder or not. Basically Read1.fastq.gz, Read2.fastq.gz,
-        Read1.fastq.gz.md5sum, Read2.fastq.gz.md5sum
+        Read1.fastq.gz.md5, Read2.fastq.gz.md5
         Args:
             target_folder: The local folder which has to be uploaded
 
@@ -155,10 +161,10 @@ class UploadFastq:
                 "Read2.md5sum. did not find all of them. please check")
             print(files)
             sys.exit(1)
-        md5files = [file for file in files if file[-6:] == 'md5sum']
-        gzfiles = [file for file in files if file[-6:] != 'md5sum']
+        md5files = [file for file in files if file[-6:] == 'md5']
+        gzfiles = [file for file in files if file[-6:] != 'md5']
         for gzfile in gzfiles:
-            if not gzfile + '.md5sum' in md5files:
+            if not gzfile + '.md5' in md5files:
                 print("cant find the md5sum for the corresponding gzfile")
                 print(gzfile)
                 sys.exit(1)
@@ -208,16 +214,13 @@ class UploadFastq:
     @classmethod
     def removing_metadata_commands(cls, single_meta, filepath, ifolder):
         """
-        It will give commands to remove the metadata first. not point adding new metadata in case it already existed.
+        It will give commands to remove the metadata first. no point adding new metadata in case it already existed.
         imeta rmw -d <irods_file> <meta> % %
         Args:
             single_meta: single_meta: single row of Metadata sheet from <metadata>.xlsx. with added Lane info and
             removed blank lines
             filepath: fastq.gz file path local
             ifolder: irods uploading path full
-            read1_read2: in case the file is neither read1 or read2 of fastq (for example cram) then put false.
-            read1: telling the file if it is R1=True or R2=False. Needed to added R1 or R2 in the metadata (or remove in
-            this case)
 
         Returns: will return all the commands which are needed to be removed before adding new metadata
 
@@ -235,8 +238,6 @@ class UploadFastq:
             removed blank lines
             filepath: fastq.gz file path local
             ifolder:  irods uploading path full
-            read1: telling the file if it is R1=True or R2=False. Needed to added R1 or R2 in the metadata (or remove in
-            this case)
 
         Returns: will return all the necessary commands which are needed to add the metadata to uploaded files.
 
@@ -251,6 +252,21 @@ class UploadFastq:
 
     @classmethod
     def special_metadata(cls, single_meta, filepath, ifolder, read1=True):
+        """
+        Special def for every Class. For example for fastq you need to add is this read1 or read2 of the file. if read1
+        then add read1 true and it will add necessary commands to update the metadata so that you know this file is
+        read1 or read2
+        Args:
+            single_meta: single_meta: single row of Metadata sheet from <metadata>.xlsx. with added Lane info and
+            removed blank lines
+            filepath: fastq.gz file path local
+            ifolder:  irods uploading path full
+            read1: to tell that the files is either read1 or read2. read1=True for default.
+
+        Returns: it will send two commands first to remove the metadata about pair_end_read and then will add the
+        metadata stating is it Read1 or Read2
+
+        """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
         meta_remove = f'imeta rmw -d {ifolder}/{uploadfile} "pair_end_read" % %'
         if read1:
@@ -262,8 +278,32 @@ class UploadFastq:
 
 
 class UploadCram(UploadFastq):
+    """
+    This class will help to upload cram (and crai) files in the irods/yoda system
+    """
+
     @classmethod
     def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False):
+        """
+        commands necessary for a single row in the metadata to upload all the files and adding all the necessary
+        metadata. for cram it means you need 4 files inside every folder. folder should be same prefix as cram files,
+        which is generally the sample name. it will check if every folder has 4 files. Read1.fastq.gz, Read2.fastq.gz,
+        Read1.fastq.gz.md5sum, Read2.fastq.gz.md5sum. Then it will give commands to start uploading the data irods and
+        remove all the metadata first but then after removing the metadata it will update the new metadata
+        Args:
+            single_meta: single row of Metadata sheet from <metadata>.xlsx
+            ifolder: The abs path of irods folder. Please do not upload relative path
+            folder: The path of the folder where cram is present in locally. default is current working directory
+            upload: By default it will return commands for upload and add the metadata. But you can run it separately.
+            If upload=True is used it will only return upload commands. Good in case very big multiple files
+            meta: By default it will return commands for upload and add the metadata. But you can run it separately.
+            If meta=True is used it will return commands to remove the previously uploaded files metadata and
+            add new metadata. Only use after you have uploaded the files
+
+        Returns: it will check necessary files present or not and then will return all the commands necessary to upload
+        the files for a single row
+
+        """
         single_meta = single_meta.reset_index(level=0)
         single_meta.columns = ['units', 'value']
         single_meta, target_folder = cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
@@ -290,6 +330,19 @@ class UploadCram(UploadFastq):
 
     @classmethod
     def checking_folder(cls, single_meta, ifolder, folder=None):
+        """
+        It will check ifolder is not relative as iRods system has problem with relative path.Absolute path is
+        recommended. It will check if the necessary folder exist in the local machine (the name of the folder will be
+        derived from the metadata itself, i.e. sample name).
+        Args:
+            single_meta: single row of Metadata sheet from <metadata>.xlsx
+            ifolder: The abs path of irods folder. Please do not upload relative path
+            folder: The path of the folder where fastq is present in locally. default is current working directory
+
+        Returns: It will return updated single_meta Series by adding lae info and remove all the NAs. It will also
+        return the target folder which needs to be uploaded from local folder.
+
+        """
         if not os.path.isabs(ifolder):
             print("Your ifolder is not absolute. Please use an absolute path to run it")
             sys.exit(1)
@@ -309,6 +362,16 @@ class UploadCram(UploadFastq):
 
     @classmethod
     def check_files(cls, target_folder):
+        """
+        This will check specific files are present in the folder or not. Basically samplename.cram, samplename.cram.crai
+        samplename.cram.md5 and samplename.cram.crai.md5
+        Args:
+            target_folder: The local folder which has to be uploaded
+
+        Returns: it will check exact file names. If every thing is ok it will send the full path of samplename.cram,
+        samplename.cram.crai, samplename.cram.md5 and samplename.cram.crai.md5
+
+        """
         samplename = os.path.basename(target_folder[:-1])
         if not os.path.exists(f'{target_folder}{samplename}.cram'):
             print("could not find the cram file. please check:", f'{target_folder}{samplename}.cram')
@@ -328,6 +391,15 @@ class UploadCram(UploadFastq):
 
     @classmethod
     def uploading_commands(cls, files, ifolder):
+        """
+        uploading files to irods commands. It uses irsync -K <local> i:<irods>. full path for irods is important
+        Args:
+            files: list of files path (cram, cram.crai, cram.md5, cram.crai.md5)
+            ifolder: irods uploading path full
+
+        Returns: it will create commands for creating folder and uploading all the 4 files.
+
+        """
         uploadfolder = files[0].split("/")[-2]
         mkdir_command = f'imkdir -p {ifolder}/{uploadfolder}'
         upload_cram_command = f'irsync -K {files[0]} i:{ifolder}/{uploadfolder}'
@@ -340,6 +412,20 @@ class UploadCram(UploadFastq):
 
     @classmethod
     def special_metadata(cls, single_meta, filepath, ifolder):
+        """
+        Special def for every Class. For cram you need to add is the read1 or read2 that was used to create cram file
+        under pair_end_reads metadata
+        Args:
+            single_meta: single_meta: single row of Metadata sheet from <metadata>.xlsx. with added Lane info and
+            removed blank lines
+            filepath: cram file path
+            ifolder: irods uploading path full
+
+        Returns: it will first remove pair_end_reads from the meta data and then will generate necessary fastq file
+        names from excel sheet and add the pair_end_reads metadata. flowcell lane is important in this case. please
+        add it in the excel sheet. add L001 format
+
+        """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
         meta_remove = f'imeta rmw -d {ifolder}/{uploadfile}  "pair_end_reads" % %'
         if 'flowcell lane' not in single_meta.index:
