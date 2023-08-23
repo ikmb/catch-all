@@ -6,9 +6,11 @@ import os
 
 import Misc
 import iRodsClass
-
+from _version import __version__
 parser = argparse.ArgumentParser(description="Uploading the files in the Yoda/iRods system and adding the metadata. "
                                              "You need to login first using iinit")
+parser.add_argument('-v', '--version', action='version',
+                    version='catch-all {version}'.format(version=__version__))
 subparsers = parser.add_subparsers(help='sub-commands help')
 sp = subparsers.add_parser('fastq', help='Uploading the fastq files. For now only works for pair end Illumina'
                                          'genome sequences')
@@ -78,5 +80,5 @@ if __name__ == "__main__":
             prefix = "all"
         _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
         for name in commands:
-            os.system(f'sh shfiles/{prefix}_{name}.sh')
+            # os.system(f'sh shfiles/{prefix}_{name}.sh')
             print(f'{prefix} {name} is done')

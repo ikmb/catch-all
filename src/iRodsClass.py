@@ -5,7 +5,7 @@ import sys
 import pandas
 
 import Misc
-
+from _version import __version__
 
 class UploadFastq:
     """
@@ -227,6 +227,7 @@ class UploadFastq:
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
+        commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
         return commands
 
     @classmethod
@@ -248,6 +249,7 @@ class UploadFastq:
                          single_meta.loc[:, 'units']).values)
 
         commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String"')
         return commands
 
     @classmethod
