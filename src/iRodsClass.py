@@ -249,7 +249,7 @@ class UploadFastq:
                          single_meta.loc[:, 'units']).values)
 
         commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String"')
+        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
         return commands
 
     @classmethod
