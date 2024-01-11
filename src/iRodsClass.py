@@ -43,11 +43,6 @@ class UploadFastq:
         """
         metadf = pandas.read_excel(metadata, sheet_name="Metadata", header=[0, 1]).transpose()
         samples = metadf.loc[('String', 'sample name'), :]
-        if metadf.shape[1] != samples.unique().shape[0]:
-            print("There are repeated sample name for multiple sequences. Right now the code can not handle that.")
-            print("Please check these samples")
-            print(samples[samples()])
-            sys.exit(1)
         commands = [
             cls.single_meta_commands(single_meta=single_meta, ifolder=ifolder, folder=folder, upload=upload, meta=meta)
             for index, single_meta in metadf.items()]
