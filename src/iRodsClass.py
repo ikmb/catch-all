@@ -78,10 +78,10 @@ class UploadFastq:
         the files for a single row
 
         """
-        single_meta = single_meta.reset_index(level=0)
+        single_meta = single_meta.reset_index(level=0).dropna()
         single_meta.columns = ['units', 'value']
-        single_meta, target_folder = cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
-        R1, R2 = cls.check_files(target_folder=target_folder)
+        cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
+        R1, R2 = cls.check_files(single_meta=single_meta, folder=folder)
         if upload:
             if meta:
                 print("both meta and upload cant be True. Use either one of them at a time. If you want run all do "
@@ -121,29 +121,35 @@ class UploadFastq:
         """
         if not os.path.isabs(ifolder):
             print("Your ifolder is not absolute. Please use an absolute path to run it")
-            sys.exit(1)
-        prefix = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS") + '_' + single_meta.loc[
-            'library id', 'value']
+            #sys.exit(1)
+        prefix = cls.prefix_call(single_meta)
         folder = os.path.abspath(folder or os.getcwd())
-        target_folder = glob.glob(f'{folder}/{prefix}*/')
-        if len(target_folder) > 1:
-            print("currently not implemented for more than one lane. please update the code ")
-            sys.exit(1)
-        elif len(target_folder) == 0:
+        if not os.path.isdir(f'{folder}/{prefix}/'):
             print(
                 "no folder found for corresponding folder. Please check and update the excel sheet. if the folder does "
                 "not exist please delete the row")
-            print(f'expected folder: {folder}/{prefix}*/')
+            print(f'expected folder: {folder}/{prefix}/')
             print(single_meta)
             sys.exit(1)
-        else:
-            target_folder = target_folder[0]
-            filename = Misc.filename_manipulate.gettingfilename(target_folder[:-1])
-            single_meta.loc['flowcell lane', 'value'] = filename.split("_")[-1][1:]
-            return single_meta.dropna(), target_folder
 
     @classmethod
-    def check_files(cls, target_folder):
+    def prefix_call(cls,single_meta):
+        """
+        predicting the prefix of the file name from the single meta information
+        Args:
+            single_meta: single row of Metadata sheet from <metadata>.xlsx
+
+        Returns: will return the prefix of the file name (with out R1_001.fastq.gz)
+
+        """
+        barcode = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS")
+        library = single_meta.loc['library id', 'value']
+        lane = single_meta.loc['flowcell lane', 'value']
+        #sample_number = single_meta.loc['sample barcode', 'value'].split("-")[1][2:]
+        prefix=f'{barcode}_{library}_{lane}'
+        return prefix
+    @classmethod
+    def check_files(cls, single_meta, folder=None):
         """
         This will check specific files are present in the folder or not. Basically Read1.fastq.gz, Read2.fastq.gz,
         Read1.fastq.gz.md5, Read2.fastq.gz.md5
@@ -154,42 +160,22 @@ class UploadFastq:
         different it will complain. If every thing is ok it will send the full path of R1_gzfile and R2_gzfile
 
         """
-        files = Misc.filename_manipulate.folder_vs_list_single(target_folder)
-        if len(files) != 4:
-            print(
-                "Expected number of files in the folder is expected to be 4. Read1, Read2, Read1.md5 and "
-                "Read2.md5. did not find all of them. please check")
-            print(files)
+        if 'flowcell lane' not in single_meta.index:
+            print("flowcell lane column is mandatory. Please add")
             sys.exit(1)
-        md5files = [file for file in files if file[-3:] == 'md5']
-        gzfiles = [file for file in files if file[-3:] != 'md5']
-        for gzfile in gzfiles:
-            if not gzfile + '.md5' in md5files:
-                print("cant find the md5sum for the corresponding gzfile")
-                print(gzfile)
+        prefix = cls.prefix_call(single_meta)
+        folder = os.path.abspath(folder or os.getcwd())
+        R1_gzfile = f'{folder}/{prefix}/{prefix}_R1_001.fastq.gz'
+        R2_gzfile = f'{folder}/{prefix}/{prefix}_R2_001.fastq.gz'
+        for file in [R1_gzfile,R2_gzfile]:
+            if not os.path.isfile(file):
+                print('Cant find the fastq file. Please check:', file)
                 sys.exit(1)
-        R1_gzfile, R2_gzfile = cls.R1_R2_file(gzfiles)
+            if not os.path.isfile(f'{file}.md5'):
+                print("cant find the md5sum for the corresponding fastq gzfile")
+                print(file)
+                sys.exit(1)
         return R1_gzfile, R2_gzfile
-
-    @classmethod
-    def R1_R2_file(cls, gzfiles):
-        """
-        given a list of two gzfiles, it will decide which one is Read1 and which one is Read2.
-        Args:
-            gzfiles: gzfiles both Read1.fastq.gz, Read2.fastq.gz in a list format
-
-        Returns: will return Read1, Read2 fastq zipped path.
-
-        """
-        Read = Misc.filename_manipulate.filenamewithoutextension_checking_zipped(gzfiles[0]).split("_")[-2]
-        if Read == 'R1':
-            R1_gzfile = gzfiles[0]
-            R2_gzfile = gzfiles[1]
-        else:
-            R2_gzfile = gzfiles[0]
-            R1_gzfile = gzfiles[1]
-        return R1_gzfile, R2_gzfile
-
     @classmethod
     def uploading_commands(cls, R1, R2, ifolder):
         """
@@ -431,14 +417,11 @@ class UploadCram(UploadFastq):
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
         meta_remove = f'imeta rmw -d {ifolder}/{uploadfile}  "pair_end_reads" % %'
         if 'flowcell lane' not in single_meta.index:
-            print("flowcell lane column is mandatory for cram files. Please add")
+            print("flowcell lane column is mandatory. Please add")
             sys.exit(1)
-        barcode = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS")
-        library = single_meta.loc['library id', 'value']
-        lane = single_meta.loc['flowcell lane', 'value']
-        sample_number = single_meta.loc['sample barcode', 'value'].split("-")[1][2:]
-        R1 = f'{barcode}_{library}_S{sample_number}_{lane}_R1_001.fastq.gz'
-        R2 = f'{barcode}_{library}_S{sample_number}_R2_001.fastq.gz'
+        prefix = cls.prefix_call(single_meta)
+        R1 = f'{prefix}_R1_001.fastq.gz'
+        R2 = f'{prefix}_R2_001.fastq.gz'
         meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_reads" "{R1} {R2}" String'
         commands = [meta_remove, meta_add]
         return commands
