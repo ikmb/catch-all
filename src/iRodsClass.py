@@ -1,11 +1,13 @@
 import glob
 import os
+import re
 import sys
 
 import pandas
 
 import Misc
 from _version import __version__
+
 
 class UploadFastq:
     """
@@ -42,7 +44,7 @@ class UploadFastq:
 
         """
         metadf = pandas.read_excel(metadata, sheet_name="Metadata", header=[0, 1]).transpose()
-        samples = metadf.loc[('String', 'sample name'), :]
+        # samples = metadf.loc[('String', 'sample name'), :]
         commands = [
             cls.single_meta_commands(single_meta=single_meta, ifolder=ifolder, folder=folder, upload=upload, meta=meta)
             for index, single_meta in metadf.items()]
@@ -116,7 +118,7 @@ class UploadFastq:
         """
         if not os.path.isabs(ifolder):
             print("Your ifolder is not absolute. Please use an absolute path to run it")
-            #sys.exit(1)
+            # sys.exit(1)
         prefix = cls.prefix_call(single_meta)
         folder = os.path.abspath(folder or os.getcwd())
         if not os.path.isdir(f'{folder}/{prefix}/'):
@@ -128,7 +130,7 @@ class UploadFastq:
             sys.exit(1)
 
     @classmethod
-    def prefix_call(cls,single_meta):
+    def prefix_call(cls, single_meta):
         """
         predicting the prefix of the file name from the single meta information
         Args:
@@ -137,12 +139,16 @@ class UploadFastq:
         Returns: will return the prefix of the file name (with out R1_001.fastq.gz)
 
         """
-        barcode = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS")
+        if re.search("-DL", str(single_meta.loc['sample barcode', 'value'])):
+            barcode = single_meta.loc['sample barcode', 'value'].replace("-DL", "-DS")
+        else:
+            barcode = f"{single_meta.loc['sample barcode', 'value']}-DS"
         library = single_meta.loc['library id', 'value']
         lane = single_meta.loc['flowcell lane', 'value']
-        #sample_number = single_meta.loc['sample barcode', 'value'].split("-")[1][2:]
-        prefix=f'{barcode}_{library}_{lane}'
+        # sample_number = single_meta.loc['sample barcode', 'value'].split("-")[1][2:]
+        prefix = f'{barcode}_{library}_{lane}'
         return prefix
+
     @classmethod
     def check_files(cls, single_meta, folder=None):
         """
@@ -162,7 +168,7 @@ class UploadFastq:
         folder = os.path.abspath(folder or os.getcwd())
         R1_gzfile = f'{folder}/{prefix}/{prefix}_R1_001.fastq.gz'
         R2_gzfile = f'{folder}/{prefix}/{prefix}_R2_001.fastq.gz'
-        for file in [R1_gzfile,R2_gzfile]:
+        for file in [R1_gzfile, R2_gzfile]:
             if not os.path.isfile(file):
                 print('Cant find the fastq file. Please check:', file)
                 sys.exit(1)
@@ -171,6 +177,7 @@ class UploadFastq:
                 print(file)
                 sys.exit(1)
         return R1_gzfile, R2_gzfile
+
     @classmethod
     def uploading_commands(cls, R1, R2, ifolder):
         """
