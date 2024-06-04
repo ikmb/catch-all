@@ -443,16 +443,16 @@ class UploadBAM(UploadCram):
         """
         samplename = os.path.basename(target_folder[:-1])
         if not os.path.exists(f'{target_folder}{samplename}.bam'):
-            print("could not find the cram file. please check:", f'{target_folder}{samplename}.bam')
+            print("could not find the bam file. please check:", f'{target_folder}{samplename}.bam')
             sys.exit(1)
         if not os.path.exists(f'{target_folder}{samplename}.bam.md5'):
-            print("could not find the cram.md5 file. please check:", f'{target_folder}{samplename}.bam.md5')
+            print("could not find the bam.md5 file. please check:", f'{target_folder}{samplename}.bam.md5')
             sys.exit(1)
         if not os.path.exists(f'{target_folder}{samplename}.bam.bai'):
-            print("could not find the crai file. please check:", f'{target_folder}{samplename}.bam.bai')
+            print("could not find the bai file. please check:", f'{target_folder}{samplename}.bam.bai')
             sys.exit(1)
         if not os.path.exists(f'{target_folder}{samplename}.bam.bai.md5'):
-            print("could not find the crai.md5 file. please check:", f'{target_folder}{samplename}.bam.bai.md5')
+            print("could not find the bai.md5 file. please check:", f'{target_folder}{samplename}.bam.bai.md5')
             sys.exit(1)
         files = [f'{target_folder}{samplename}.bam', f'{target_folder}{samplename}.bam.bai',
                  f'{target_folder}{samplename}.bam.md5', f'{target_folder}{samplename}.bam.bai.md5']
