@@ -427,3 +427,33 @@ class UploadCram(UploadFastq):
         meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_reads" "{R1} {R2}" String'
         commands = [meta_remove, meta_add]
         return commands
+
+class UploadBAM(UploadCram):
+    @classmethod
+    def check_files(cls, target_folder):
+        """
+        This will check specific files are present in the folder or not. Basically samplename.cram, samplename.cram.crai
+        samplename.cram.md5 and samplename.cram.crai.md5
+        Args:
+            target_folder: The local folder which has to be uploaded
+
+        Returns: it will check exact file names. If every thing is ok it will send the full path of samplename.cram,
+        samplename.cram.crai, samplename.cram.md5 and samplename.cram.crai.md5
+
+        """
+        samplename = os.path.basename(target_folder[:-1])
+        if not os.path.exists(f'{target_folder}{samplename}.bam'):
+            print("could not find the cram file. please check:", f'{target_folder}{samplename}.cram')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.bam.md5'):
+            print("could not find the cram.md5 file. please check:", f'{target_folder}{samplename}.cram.md5')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.bam.crai'):
+            print("could not find the crai file. please check:", f'{target_folder}{samplename}.cram.crai')
+            sys.exit(1)
+        if not os.path.exists(f'{target_folder}{samplename}.bam.bai.md5'):
+            print("could not find the crai.md5 file. please check:", f'{target_folder}{samplename}.cram.crai.md5')
+            sys.exit(1)
+        files = [f'{target_folder}{samplename}.cram', f'{target_folder}{samplename}.cram.crai',
+                 f'{target_folder}{samplename}.cram.md5', f'{target_folder}{samplename}.cram.crai.md5']
+        return files

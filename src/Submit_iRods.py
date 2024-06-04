@@ -52,6 +52,9 @@ sp.add_argument('--meta',
                 help='By default it will upload and add the meta data. But you can run it separately. If --meta is '
                      'used it will remove the previously uploaded files metadata and add new meta data. Only use'
                      'after --upload', action="store_true")
+sp.add_argument('--bam',
+                help='By default it will upload cram and crai files. But if you want to upload bam or bai files '
+                     'instead. Use this command', action="store_true")
 args = parser.parse_args()
 if __name__ == "__main__":
     if args.cmd == "fastq":
@@ -69,7 +72,11 @@ if __name__ == "__main__":
             os.system(f'sh shfiles/{prefix}_{name}.sh')
             print(f'{prefix} {name} is done')
     elif args.cmd == "cram":
-        commands = iRodsClass.UploadCram.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
+        if args.bam:
+            commands = iRodsClass.UploadBAM.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
+                                                  upload=args.upload, meta=args.meta)
+        else:
+            commands = iRodsClass.UploadCram.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
                                                upload=args.upload, meta=args.meta)
         Misc.creatingfolders("shfiles")
         if args.upload:
