@@ -15,7 +15,7 @@ class UploadFastq:
     """
 
     @classmethod
-    def main(cls, metadata, ifolder, folder=None, upload=False, meta=False):
+    def main(cls, metadata, ifolder, folder=None, upload=False, meta=False,file=False):
         """
         The main wrapper function for uploading the fastq files with all the necessary checks. given a metadata
         csv file. It will read it, guess the folder names from the metadata and search it in the <folder>. Every row
@@ -38,6 +38,7 @@ class UploadFastq:
             meta: By default it will return commands for upload and add the metadata. But you can run it separately.
             If meta=True is used it will return commands to remove the previously uploaded files metadata and
             add new metadata. Only use after you have uploaded the files
+            file: To add the metadata to file level. Default is folder level which can be searched via yoda system
 
         Returns: it will check necessary files present or not and then will return all the commands necessary to upload
         it. It will not run it. For running use os.system(list(dict_commands.values())) or check Submit_iRods.py
@@ -46,14 +47,15 @@ class UploadFastq:
         metadf = pandas.read_excel(metadata, sheet_name="Metadata", header=[0, 1]).transpose()
         # samples = metadf.loc[('String', 'sample name'), :]
         commands = [
-            cls.single_meta_commands(single_meta=single_meta, ifolder=ifolder, folder=folder, upload=upload, meta=meta)
+            cls.single_meta_commands(single_meta=single_meta,
+                                     ifolder=ifolder, folder=folder, upload=upload, meta=meta, file=file)
             for index, single_meta in metadf.items()]
         name, commands = zip(*commands)
         dict_commands = dict(zip(name, commands))
         return dict_commands
 
     @classmethod
-    def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False):
+    def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False,file=False):
         """
         commands necessary for a single row in the metadata to upload all the files and adding all the necessary
         metadata. for fastq it means you need 4 files inside every folder. folder should be same prefix as fastq files,
@@ -88,16 +90,25 @@ class UploadFastq:
 
         else:
             upload_commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
-            R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
-            R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
-            R1_special = cls.special_metadata(single_meta=single_meta, filepath=R1, ifolder=ifolder, read1=True)
-            R2_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
-            R2_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
-            R2_special = cls.special_metadata(single_meta=single_meta, filepath=R2, ifolder=ifolder, read1=False)
-            if meta:
-                commands = R1_remove + R1_add_command + R1_special + R2_remove + R2_add_command + R2_special
+            if file:
+                R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
+                R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
+                R1_special = cls.special_metadata(single_meta=single_meta, filepath=R1, ifolder=ifolder, read1=True)
+                R2_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
+                R2_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R2, ifolder=ifolder)
+                R2_special = cls.special_metadata(single_meta=single_meta, filepath=R2, ifolder=ifolder, read1=False)
+                if meta:
+                    commands = R1_remove + R1_add_command + R1_special + R2_remove + R2_add_command + R2_special
+                else:
+                    commands = upload_commands + R1_remove + R1_add_command + R2_remove + R2_add_command
             else:
-                commands = upload_commands + R1_remove + R1_add_command + R2_remove + R2_add_command
+                remove = cls.removing_metadata_commands(single_meta=single_meta, ifolder=ifolder)
+                add_command = cls.adding_metadata_commands(single_meta=single_meta, ifolder=ifolder)
+                if meta:
+                    commands = remove + add_command
+                else:
+                    commands = upload_commands + remove + add_command
+
         return uploadfolder, Misc.joinginglistbyspecificstring(commands, string="\n")
 
     @classmethod
@@ -200,7 +211,7 @@ class UploadFastq:
         return commands, uploadfolder
 
     @classmethod
-    def removing_metadata_commands(cls, single_meta, filepath, ifolder):
+    def removing_metadata_commands(cls, single_meta,  ifolder,filepath=None):
         """
         It will give commands to remove the metadata first. no point adding new metadata in case it already existed.
         imeta rmw -d <irods_file> <meta> % %
@@ -214,12 +225,16 @@ class UploadFastq:
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-        commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-        commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
+        if filepath:
+            commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
+        else:
+            commands = [f'imeta rmw -d {ifolder} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -d {ifolder} "version" % %')
         return commands
 
     @classmethod
-    def adding_metadata_commands(cls, single_meta, filepath, ifolder):
+    def adding_metadata_commands(cls, single_meta,  ifolder,filepath=None):
         """
         main point of all this. adding metadata to the uploaded irods file. imeta add -d <irods_file> <meta>
         Args:
@@ -231,13 +246,16 @@ class UploadFastq:
         Returns: will return all the necessary commands which are needed to add the metadata to uploaded files.
 
         """
-        uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         metainfo = list(('"' + single_meta.index + '" "' +
                          single_meta.loc[:, 'value'].astype(str) + '" ' +
                          single_meta.loc[:, 'units']).values)
-
-        commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
+        if filepath:
+            uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
+            commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
+        else:
+            commands = [f'imeta add -d {ifolder} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -d {ifolder} "version" "v{__version__}" String')
         return commands
 
     @classmethod
@@ -273,7 +291,7 @@ class UploadCram(UploadFastq):
     """
 
     @classmethod
-    def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False):
+    def single_meta_commands(cls, single_meta, ifolder, folder=None, upload=False, meta=False,file=True):
         """
         commands necessary for a single row in the metadata to upload all the files and adding all the necessary
         metadata. for cram it means you need 4 files inside every folder. folder should be same prefix as cram files,
@@ -289,6 +307,7 @@ class UploadCram(UploadFastq):
             meta: By default it will return commands for upload and add the metadata. But you can run it separately.
             If meta=True is used it will return commands to remove the previously uploaded files metadata and
             add new metadata. Only use after you have uploaded the files
+            file: To add the metadata to file level. Default is folder level which can be searched via yoda system
 
         Returns: it will check necessary files present or not and then will return all the commands necessary to upload
         the files for a single row
@@ -308,13 +327,22 @@ class UploadCram(UploadFastq):
             commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
         else:
             upload_commands, uploadfolder = cls.uploading_commands(files=files, ifolder=ifolder)
-            cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
-            cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
-            cram_special = cls.special_metadata(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
-            if meta:
-                commands = cram_remove + cram_add + cram_special
+            if file:
+                cram_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+                cram_add = cls.adding_metadata_commands(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+                cram_special = cls.special_metadata(single_meta=single_meta, filepath=files[0], ifolder=ifolder)
+                if meta:
+                    commands = cram_remove + cram_add + cram_special
+                else:
+                    commands = upload_commands + cram_remove + cram_add + cram_special
             else:
-                commands = upload_commands + cram_remove + cram_add + cram_special
+                remove = cls.removing_metadata_commands(single_meta=single_meta, ifolder=ifolder)
+                add = cls.adding_metadata_commands(single_meta=single_meta, ifolder=ifolder)
+                if meta:
+                    commands = remove + add
+                else:
+                    commands = upload_commands + remove + add
+
         commands = Misc.joinginglistbyspecificstring(commands, string="\n")
         return uploadfolder, commands
 

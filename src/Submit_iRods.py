@@ -55,11 +55,14 @@ sp.add_argument('--meta',
 sp.add_argument('--bam',
                 help='By default it will upload cram and crai files. But if you want to upload bam or bai files '
                      'instead. Use this command', action="store_true")
+sp.add_argument('--file',
+                help='To add the metadata to file level. Default is folder level which can be searched via yoda '
+                     'system', action="store_true")
 args = parser.parse_args()
 if __name__ == "__main__":
     if args.cmd == "fastq":
         commands = iRodsClass.UploadFastq.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
-                                               upload=args.upload, meta=args.meta)
+                                               upload=args.upload, meta=args.meta,file=args.file)
         Misc.creatingfolders("shfiles")
         if args.upload:
             prefix = "upload"
@@ -74,10 +77,10 @@ if __name__ == "__main__":
     elif args.cmd == "cram":
         if args.bam:
             commands = iRodsClass.UploadBAM.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
-                                                  upload=args.upload, meta=args.meta)
+                                                  upload=args.upload, meta=args.meta,file=args.file)
         else:
             commands = iRodsClass.UploadCram.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
-                                               upload=args.upload, meta=args.meta)
+                                               upload=args.upload, meta=args.meta,file=args.file)
         Misc.creatingfolders("shfiles")
         if args.upload:
             prefix = "upload"
