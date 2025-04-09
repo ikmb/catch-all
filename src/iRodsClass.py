@@ -246,14 +246,18 @@ class UploadFastq:
         Returns: will return all the necessary commands which are needed to add the metadata to uploaded files.
 
         """
-        metainfo = list(('"' + single_meta.index + '" "' +
-                         single_meta.loc[:, 'value'].astype(str) + '" ' +
-                         single_meta.loc[:, 'units']).values)
+
         if filepath:
+            metainfo = list(('"' + single_meta.index + '" "' +
+                             single_meta.loc[:, 'value'].astype(str) + '" ' +
+                             single_meta.loc[:, 'units']).values)
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
             commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
             commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
         else:
+            metainfo = list(('"' + single_meta.index + '" "' +
+                             single_meta.loc[:, 'value'].astype(str) + '" ' +
+                             "usr_").values)
             commands = [f'imeta add -d {ifolder} {meta}' for meta in metainfo]
             commands.append(f'imeta add -d {ifolder} "version" "v{__version__}" String')
         return commands
