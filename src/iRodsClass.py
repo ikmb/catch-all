@@ -229,8 +229,8 @@ class UploadFastq:
             commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
             commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
         else:
-            commands = [f'imeta rmw -d {ifolder} "{meta}" % %' for meta in single_meta.index]
-            commands.append(f'imeta rmw -d {ifolder} "version" % %')
+            commands = [f'imeta rmw -C {ifolder} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -C {ifolder} "version" % %')
         return commands
 
     @classmethod
@@ -258,8 +258,8 @@ class UploadFastq:
             metainfo = list(('"' + single_meta.index + '" "' +
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              "usr_").values)
-            commands = [f'imeta add -d {ifolder} {meta}' for meta in metainfo]
-            commands.append(f'imeta add -d {ifolder} "version" "v{__version__}" String')
+            commands = [f'imeta add -C {ifolder} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -C {ifolder} "version" "v{__version__}" String')
         return commands
 
     @classmethod
