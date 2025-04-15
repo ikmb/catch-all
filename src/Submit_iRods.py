@@ -32,6 +32,9 @@ sp.add_argument('--meta',
                 help='By default it will upload and add the meta data. But you can run it separately. If --meta is '
                      'used it will remove the previously uploaded files metadata and add new meta data. Only use'
                      'after --upload', action="store_true")
+sp.add_argument('--file',
+                help='By default it will add metadata on the folder level as it can be searched via YODA. But you can '
+                     'force it to add file level too', action="store_true")
 sp = subparsers.add_parser('cram', help='Uploading the cram files. ')
 sp.set_defaults(cmd='cram')
 sp.add_argument('xlsx', help="Path of the metadata info excel sheet that is generated. check "
@@ -56,8 +59,8 @@ sp.add_argument('--bam',
                 help='By default it will upload cram and crai files. But if you want to upload bam or bai files '
                      'instead. Use this command', action="store_true")
 sp.add_argument('--file',
-                help='To add the metadata to file level. Default is folder level which can be searched via yoda '
-                     'system', action="store_true")
+                help='By default it will add metadata on the folder level as it can be searched via YODA. But you can '
+                     'force it to add file level too', action="store_true")
 args = parser.parse_args()
 if __name__ == "__main__":
     if args.cmd == "fastq":

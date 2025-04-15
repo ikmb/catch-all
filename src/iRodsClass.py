@@ -79,17 +79,18 @@ class UploadFastq:
         """
         single_meta = single_meta.reset_index(level=0).dropna()
         single_meta.columns = ['units', 'value']
-        cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
-        R1, R2 = cls.check_files(single_meta=single_meta, folder=folder)
+        upload_commands=[]
+        if not meta:
+            cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
+            R1, R2 = cls.check_files(single_meta=single_meta, folder=folder)
+            upload_commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
         if upload:
             if meta:
                 print("both meta and upload cant be True. Use either one of them at a time. If you want run all do "
                       "nothing. By default it will run the whole thing")
                 sys.exit(1)
-            commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
-
+            commands=upload_commands
         else:
-            upload_commands, uploadfolder = cls.uploading_commands(R1=R1, R2=R2, ifolder=ifolder)
             if file:
                 R1_remove = cls.removing_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
                 R1_add_command = cls.adding_metadata_commands(single_meta=single_meta, filepath=R1, ifolder=ifolder)
@@ -102,6 +103,7 @@ class UploadFastq:
                 else:
                     commands = upload_commands + R1_remove + R1_add_command + R2_remove + R2_add_command
             else:
+                uploadfolder=cls.prefix_call(single_meta)
                 remove = cls.removing_metadata_commands(single_meta=single_meta, ifolder=ifolder)
                 add_command = cls.adding_metadata_commands(single_meta=single_meta, ifolder=ifolder)
                 if meta:
@@ -224,13 +226,12 @@ class UploadFastq:
         Returns: will return all the commands which are needed to be removed before adding new metadata
 
         """
-        uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         if filepath:
-            commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-            commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
+            uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
         else:
-            commands = [f'imeta rmw -C {ifolder} "{meta}" % %' for meta in single_meta.index]
-            commands.append(f'imeta rmw -C {ifolder} "version" % %')
+            uploadfile = cls.prefix_call(single_meta)
+        commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
+        commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
         return commands
 
     @classmethod
@@ -252,14 +253,13 @@ class UploadFastq:
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              single_meta.loc[:, 'units']).values)
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-            commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-            commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
         else:
             metainfo = list(('"' + single_meta.index + '" "' +
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              "usr_").values)
-            commands = [f'imeta add -C {ifolder} {meta}' for meta in metainfo]
-            commands.append(f'imeta add -C {ifolder} "version" "v{__version__}" String')
+            uploadfile = cls.prefix_call(single_meta)
+        commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
         return commands
 
     @classmethod
