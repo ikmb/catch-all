@@ -66,17 +66,6 @@ if __name__ == "__main__":
     if args.cmd == "fastq":
         commands = iRodsClass.UploadFastq.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
                                                upload=args.upload, meta=args.meta,file=args.file)
-        Misc.creatingfolders("shfiles")
-        if args.upload:
-            prefix = "upload"
-        elif args.meta:
-            prefix = "meta"
-        else:
-            prefix = "all"
-        _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
-        for name in commands:
-            os.system(f'sh shfiles/{prefix}_{name}.sh')
-            print(f'{prefix} {name} is done')
     elif args.cmd == "cram":
         if args.bam:
             commands = iRodsClass.UploadBAM.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
@@ -84,14 +73,14 @@ if __name__ == "__main__":
         else:
             commands = iRodsClass.UploadCram.main(metadata=args.xlsx, ifolder=args.ifolder, folder=args.folder,
                                                upload=args.upload, meta=args.meta,file=args.file)
-        Misc.creatingfolders("shfiles")
-        if args.upload:
-            prefix = "upload"
-        elif args.meta:
-            prefix = "meta"
-        else:
-            prefix = "all"
-        _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
-        for name in commands:
-            os.system(f'sh shfiles/{prefix}_{name}.sh')
-            print(f'{prefix} {name} is done')
+    Misc.creatingfolders("shfiles")
+    if args.upload:
+        prefix = "upload"
+    elif args.meta:
+        prefix = "meta"
+    else:
+        prefix = "all"
+    _ = [Misc.writing_bylines4mlist([commands[name]], output=f'shfiles/{prefix}_{name}.sh') for name in commands]
+    for name in commands:
+        os.system(f'sh shfiles/{prefix}_{name}.sh')
+        print(f'{prefix} {name} is done')
