@@ -228,10 +228,13 @@ class UploadFastq:
         """
         if filepath:
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
+            commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
         else:
             uploadfile = cls.prefix_call(single_meta)
-        commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-        commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
+            commands = [f'imeta rmw -C {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -C {ifolder}/{uploadfile} "version" % %')
+
         return commands
 
     @classmethod
@@ -253,13 +256,16 @@ class UploadFastq:
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              single_meta.loc[:, 'units']).values)
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
+            commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
         else:
             metainfo = list(('"' + single_meta.index + '" "' +
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              "usr_").values)
             uploadfile = cls.prefix_call(single_meta)
-        commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-        commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
+            commands = [f'imeta add -C {ifolder}/{uploadfile} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -C {ifolder}/{uploadfile} "version" "v{__version__}" String')
+
         return commands
 
     @classmethod
