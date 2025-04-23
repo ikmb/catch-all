@@ -1,5 +1,5 @@
-
-# 1. Overview 
+# Data Policy 
+## 1. Overview 
 This document outlines the data management and release policy for the clinical research unit (CRU) “CATCH ALL – towards 
 a cure for all adults and children with Acute Lymphoblastic Leukemia (ALL)”. The goal of this document is to provide 
 instructions on how data is to be stored, described, accessed and disseminated.  
@@ -7,18 +7,18 @@ Within this document, the term “data” is primarily used to refer to patient 
 sequencing data (both genome and RNA level) generated as part of research projects within the CRU. Additional data types
 may be adequately covered by the general instructions below. If existing rules seem unsuitable for a given type of data,
 amendments to this document under Section 3 shall be made in dialogue with the INF project.
-# 2. Roles and responsibilities 
+## 2. Roles and responsibilities 
 The following roles and associated responsibilities are currently defined:
-## 2.1: Medical faculty/IMIS at Kiel University
+### 2.1: Medical faculty/IMIS at Kiel University
 The Medical Faculty, and therein the Institute for Medical Informatics and Statistics (IMIS), at Kiel University 
 provides the IT infrastructure required for the CRC data management. This data management system is referred to as 
 “medFDM”.  
 The IMIS ensures that services are maintained and expanded as required by “CATCH-ALL”.
-## 2.2: CATCH-ALL INF project
+### 2.2: CATCH-ALL INF project
 The INF project is responsible for implementing data life cycles and workflows. Most of the “primary” data will be 
 handled by the INF project and processed according to the guidelines outlined in the present data policy (Section 3 and 
 4).
-## 2.3: Data producers / PIs
+### 2.3: Data producers / PIs
 Principal investigators within the CRU are responsible for communicating their data generation plans to the INF project 
 to ensure that all data can be captured in the data management system of the CRU.  
 The INF project, where possible, shall be designated a data recipient for all sequencing projects. PIs must ensure that 
@@ -26,10 +26,10 @@ metadata is captured prior to e.g. sequencing and passed on to the INF project. 
 forms for standard applications.  
 The choice of metadata to include lies (primarily) with the data producers but shall be in accordance with “FAIR” 
 principles (i.e. third parties must be able to (re-)use the data given the annotated metadata).
-## 2.4: All users
+### 2.4: All users
 All users of the data management system must comply with data access and release policies outlined in Section 4.
-# 3. Storage and annotation 
-## 3.1: iRODS archive storage
+## 3. Storage and annotation 
+### 3.1: iRODS archive storage
 All raw (sequencing) data (both genome and RNA) generated within the CRU (i.e. financed through CRU funds) must be 
 deposited in the data management solution medFDM.  
 If sequencing is not coordinated with the INF project for automatic data delivery/archiving, it is the users’ 
@@ -46,21 +46,21 @@ Data access shall be set in accordance with guidelines described under Section 4
 Data will be stored within the “medFDM” system for the lifetime of the CRU, but at minimum 3 years from initial 
 submission into the system.  
 Storage beyond this time should be sought through publication to international data repositories (Section 4.2).   
-## 3.2: Metadata annotation
+### 3.2: Metadata annotation
 All data submitted to the data management system must be annotated with relevant metadata to enable data discovery 
 across projects within the CRU, help with submission to downstream repositories and enable third parties to reuse the 
 data at a later point. The current metadata standard you can [here](https://github.com/ikmb/catch-all/blob/main/metadata/1.0/metadata.md).  
 These specifications are based on the [EBI MIxS standard](http://www.ebi.ac.uk/ena/submit/mixs-checklists). Metadata keys not covered by this specification should 
 be used only after consulting with the INF project so they can be added to the metadata vocabulary.
-## 3.3: Clinical data
+### 3.3: Clinical data
 Clinical (patient) data will be managed by the Z1 project. All digital data subject to this data policy shall be 
 anonymised and include no metadata directly enabling identification of individuals. Specifically, no identifying 
 information, such as a patient ID or name, shall be stored. Connecting clinical data with digital/omics data shall only 
 be possible by the Z1 project - using information about the relationship of probant identities (Z1) and e.g., sequencing
 library identifiers (INF). All data will be stored securely in the medFDM system, which employs controlled access 
 policies to prevent unauthorised access.
-# 4. Data types 
- ## 4.1: Short read files (fastq or ORA)
+## 4. Data types 
+### 4.1: Short read files (fastq or ORA)
 Short reads generated on e.g. the Illumina platform of machines are the primary data type within the CRU.  
 Short reads shall be deposited within the medFDM in their raw form (no trimming, no filtering), with their original 
 file name as given by the sequencing provider intact.  
@@ -72,15 +72,15 @@ Where multiple read files belong to one sample (i.e. paired-end reads), the comp
 tar archive. The tar archive shall be named after the sequencing library (usually the common root of the filenames to be
 grouped).  
 The tar archive shall contain the corresponding fastqc statistics (one statistics file per sequence file).  
-## 4.2: Analytical results (generic) 
+### 4.2: Analytical results (generic) 
 Finalised analyses (tabular counts or similar) may only be stored in the “medFDM” if the analysis process is included 
 with the data so that any user may be able to accurately reproduce the workflow. Analysis and the “analysis trace” shall
 be submitted together as tar archive and must be annotated with appropriate metadata. Specifically, it must be clear 
 which raw data was used in the analysis by reference to the sample or library name(s) within “medFDM“.  
 The format of the analytical result must be discussed with the INF project prior to submission to help identify common 
 standards and develop best practices.  
-# 5. Access and release 
-## 5.1: Data sharing within the CATCH-ALL
+## 5. Access and release 
+### 5.1: Data sharing within the CATCH-ALL
 Data and metadata from the individual projects shall be readable by all CRU members to aid in data discovery.  
 Data shall only be writable by members of the respective projects (the data owner).  
 Data belongs to the user it was generated for, as indicated by the mandatory metadata key “MAIN_CONTACT_NAME”.  
@@ -89,11 +89,11 @@ To access data, the central point of contact is Lorenz Bastian who is in charge 
 database. Depending on which data is requested by the data requester, Lorenz Bastian will provide a list of data 
 pseudonyms or refer the data requester to the Z project. With the list of data pseudonyms, the INF data manager will 
 retrieve the corresponding bulk data (e.g. high-throughput sequencing data) from the iRODS/YODA database/system.       
-## 5.2: Release of data into the public domain
+### 5.2: Release of data into the public domain
 Data generated within the CRU shall be made available to the public upon publication.  
 Data shall be published through upload into suitable, widely accepted repositories (e.g. NCBI or EBI archives).
 Data published to international repositories shall be annotated within the CRC iRODS using the resulting digital object 
 identifier (DOI) in the remote database, if possible/applicable.   
-# 6. Revision history 
+## 6. Revision history 
 Generated in April 2025. 
 Release 1.1 generated in .  
