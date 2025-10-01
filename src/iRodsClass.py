@@ -80,6 +80,8 @@ class UploadFastq:
         single_meta = single_meta.reset_index(level=0).dropna()
         single_meta.columns = ['units', 'value']
         upload_commands=[]
+        if ifolder[-1:]!="/":
+            ifolder+="/"
         if not meta:
             cls.checking_folder(single_meta=single_meta, ifolder=ifolder, folder=folder)
             R1, R2 = cls.check_files(single_meta=single_meta, folder=folder)
@@ -204,11 +206,11 @@ class UploadFastq:
 
         """
         uploadfolder = R1.split("/")[-2]
-        mkdir_command = f'imkdir -p {ifolder}/{uploadfolder}'
-        upload_R1_command = f'irsync -K {R1} i:{ifolder}/{uploadfolder}'
-        upload_R2_command = f'irsync -K {R2} i:{ifolder}/{uploadfolder}'
-        upload_R1md5_command = f'irsync -K {R1}.md5 i:{ifolder}/{uploadfolder}'
-        upload_R2md5_command = f'irsync -K {R2}.md5 i:{ifolder}/{uploadfolder}'
+        mkdir_command = f'imkdir -p {ifolder}{uploadfolder}'
+        upload_R1_command = f'irsync -K {R1} i:{ifolder}{uploadfolder}'
+        upload_R2_command = f'irsync -K {R2} i:{ifolder}{uploadfolder}'
+        upload_R1md5_command = f'irsync -K {R1}.md5 i:{ifolder}{uploadfolder}'
+        upload_R2md5_command = f'irsync -K {R2}.md5 i:{ifolder}{uploadfolder}'
         commands = [mkdir_command, upload_R1_command, upload_R1md5_command, upload_R2_command, upload_R2md5_command]
         return commands, uploadfolder
 
@@ -228,12 +230,12 @@ class UploadFastq:
         """
         if filepath:
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-            commands = [f'imeta rmw -d {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-            commands.append(f'imeta rmw -d {ifolder}/{uploadfile} "version" % %')
+            commands = [f'imeta rmw -d {ifolder}{uploadfile} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -d {ifolder}{uploadfile} "version" % %')
         else:
             uploadfile = cls.prefix_call(single_meta)
-            commands = [f'imeta rmw -C {ifolder}/{uploadfile} "{meta}" % %' for meta in single_meta.index]
-            commands.append(f'imeta rmw -C {ifolder}/{uploadfile} "version" % %')
+            commands = [f'imeta rmw -C {ifolder}{uploadfile} "{meta}" % %' for meta in single_meta.index]
+            commands.append(f'imeta rmw -C {ifolder}{uploadfile} "version" % %')
 
         return commands
 
@@ -256,15 +258,15 @@ class UploadFastq:
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              single_meta.loc[:, 'units']).values)
             uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], "/")
-            commands = [f'imeta add -d {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-            commands.append(f'imeta add -d {ifolder}/{uploadfile} "version" "v{__version__}" String')
+            commands = [f'imeta add -d {ifolder}{uploadfile} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -d {ifolder}{uploadfile} "version" "v{__version__}" String')
         else:
             metainfo = list(('"' + single_meta.index + '" "' +
                              single_meta.loc[:, 'value'].astype(str) + '" ' +
                              "usr_").values)
             uploadfile = cls.prefix_call(single_meta)
-            commands = [f'imeta add -C {ifolder}/{uploadfile} {meta}' for meta in metainfo]
-            commands.append(f'imeta add -C {ifolder}/{uploadfile} "version" "v{__version__}" String')
+            commands = [f'imeta add -C {ifolder}{uploadfile} {meta}' for meta in metainfo]
+            commands.append(f'imeta add -C {ifolder}{uploadfile} "version" "v{__version__}" String')
 
         return commands
 
@@ -286,11 +288,11 @@ class UploadFastq:
 
         """
         uploadfile = Misc.joinginglistbyspecificstring(filepath.split("/")[-2:], string="/")
-        meta_remove = f'imeta rmw -d {ifolder}/{uploadfile} "pair_end_read" % %'
+        meta_remove = f'imeta rmw -d {ifolder}{uploadfile} "pair_end_read" % %'
         if read1:
-            meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_read" "Read1" String'
+            meta_add = f'imeta add -d {ifolder}{uploadfile} "pair_end_read" "Read1" String'
         else:
-            meta_add = f'imeta add -d {ifolder}/{uploadfile} "pair_end_read" "Read2" String'
+            meta_add = f'imeta add -d {ifolder}{uploadfile} "pair_end_read" "Read2" String'
         commands = [meta_remove, meta_add]
         return commands
 
